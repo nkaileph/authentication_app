@@ -39,9 +39,11 @@ jobs:
 
         EC2_PUBLIC_DNS=$(aws ec2 describe-instances --instance-ids $EC2_INSTANCE_ID --region $AWS_REGION --query "Reservations[0].Instances[0].PublicDnsName" --output text)
         
-        ssh -o StrictHostKeyChecking=no -i /tmp/nodestackkey.pem ubuntu@$EC2_PUBLIC_DNS << EOF
+         ssh -o StrictHostKeyChecking=no -i /tmp/nodestackkey.pem ubuntu@$EC2_PUBLIC_DNS << EOF
           cd /home/ubuntu/authentication_app
-          git pull origin master
+          git remote set-url origin https://github.com/nkaileph/authentication_app.git
+          git fetch origin
+          git rebase origin/master || git merge origin/master
           npm install
           pm2 restart server.js
         EOF
