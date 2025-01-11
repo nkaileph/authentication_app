@@ -19,56 +19,6 @@ jobs:
         node-version: '14'
 
     - name: Install dependencies
-      run: 
-        npm install
-        
-
-    - name: Deploy to EC2
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        AWS_REGION: ${{ secrets.AWS_REGION }}
-        EC2_INSTANCE_ID: ${{ secrets.EC2_INSTANCE_ID }}
-        EC2_KEY: ${{ secrets.EC2_KEY }}
-      run: 
-        sudo apt-get update
-        sudo apt-get install -y awscli
-        
-        aws ec2 start-instances --instance-ids $EC2_INSTANCE_ID --region $AWS_REGION
-        
-        aws ec2 wait instance-running --instance-ids $EC2_INSTANCE_ID --region $AWS_REGION
-
-        echo "$EC2_KEY" > /tmp/nodestackkey.pem
-        chmod 400 /tmp/nodestackkey.pem
-
-        ssh -o StrictHostKeyChecking=no -i tmp/my-key.pem ubuntu@54.161.216.239 << EOF
-          cd /home/ubuntu/authentication_app &&
-          git pull origin master &&
-          npm install &&
-          pm2 restart server.js
-        EOF
-
-        name: Backend CI/CD Pipelines
-
-on:
-  push:
-    branches:
-      - master
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
-
-    - name: Set up Node.js
-      uses: actions/setup-node@v2
-      with:
-        node-version: '14'
-
-    - name: Install dependencies
       run: npm install
 
     - name: Deploy to EC2
@@ -77,7 +27,6 @@ jobs:
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_REGION: ${{ secrets.AWS_REGION }}
         EC2_INSTANCE_ID: ${{ secrets.EC2_INSTANCE_ID }}
-        EC2_KEY: ${{ secrets.EC2_KEY }}
       run: |
         sudo apt-get update
         sudo apt-get install -y awscli
@@ -85,7 +34,7 @@ jobs:
         aws ec2 start-instances --instance-ids $EC2_INSTANCE_ID --region $AWS_REGION
         aws ec2 wait instance-running --instance-ids $EC2_INSTANCE_ID --region $AWS_REGION
 
-        echo "$EC2_KEY" > /tmp/nodestackkey.pem
+        echo "${{ secrets.PATH_TO_KEY }}" > /tmp/nodestackkey.pem
         chmod 400 /tmp/nodestackkey.pem
 
         EC2_PUBLIC_DNS=$(aws ec2 describe-instances --instance-ids $EC2_INSTANCE_ID --region $AWS_REGION --query "Reservations[0].Instances[0].PublicDnsName" --output text)
