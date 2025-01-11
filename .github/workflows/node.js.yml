@@ -1,0 +1,55 @@
+name: Backend CI/CD Pipelines
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '14'
+
+    - name: Install dependencies
+      run: 
+        cd server
+        npm install
+        
+
+    - name: Deploy to EC2
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_REGION: ${{ secrets.AWS_REGION }}
+        EC2_INSTANCE_ID: ${{ secrets.EC2_INSTANCE_ID }}
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y awscli
+        
+        aws ec2 start-instances --instance-ids $EC2_INSTANCE_ID --region $AWS_REGION
+        
+        aws ec2 wait instance-running --instance-ids $EC2_INSTANCE_ID --region $AWS_REGION
+
+        echo "${{ secrets.PATH_TO_KEY }}" > /tmp/my-key.pem
+        chmod 400 /tmp/my-key.pem
+
+        ssh -o StrictHostKeyChecking=no -i tmp/my-key.pem ubuntu@$EC2_PUBLIC_DNS << EOF
+          cd /home/ec2-user/authentication_app
+          git pull origin master &&
+          npm install &&
+          pm2 restart server.js
+        EOF
+
+        rm /tmp/my-key.pem
+  
+        aws ec2 describe-instances --instance-ids $EC2_INSTANCE_ID
+        scp -i /path/to/your/key.pem -r ./* ec2-user@your-ec2-instance-public-dns:/home/ec2-user/authentication_app
+        ssh -i /path/to/your/key.pem ec2-user@your-ec2-instance-public-dns "cd /home/ec2-user/authentication_app && npm install && npm start"
