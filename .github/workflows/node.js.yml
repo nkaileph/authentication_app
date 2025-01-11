@@ -50,6 +50,3 @@ jobs:
 
         rm /tmp/my-key.pem
   
-        aws ec2 describe-instances --instance-ids $EC2_INSTANCE_ID
-        scp -i /path/to/your/key.pem -r ./* ec2-user@your-ec2-instance-public-dns:/home/ec2-user/authentication_app
-        ssh -i /path/to/your/key.pem ec2-user@your-ec2-instance-public-dns "cd /home/ec2-user/authentication_app && npm install && npm start"
