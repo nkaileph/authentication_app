@@ -20,7 +20,6 @@ jobs:
 
     - name: Install dependencies
       run: 
-        cd server
         npm install
         
 
@@ -41,8 +40,8 @@ jobs:
         echo "${{ secrets.PATH_TO_KEY }}" > /tmp/my-key.pem
         chmod 400 /tmp/my-key.pem
 
-        ssh -o StrictHostKeyChecking=no -i tmp/my-key.pem ubuntu@$EC2_PUBLIC_DNS << EOF
-          cd /home/ec2-user/authentication_app
+        ssh -o StrictHostKeyChecking=no -i tmp/my-key.pem ubuntu@54.161.216.239 << EOF
+          cd /home/ubuntu/authentication_app &&
           git pull origin master &&
           npm install &&
           pm2 restart server.js
